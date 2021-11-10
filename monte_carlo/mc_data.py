@@ -28,6 +28,11 @@ def get_coinbase_ticker_list():
     return coinbase_ticker_list
 
 
+def get_link(coin_name):
+    link = coin_name.lower().replace(' ', '-').replace('.', '-')
+    return link
+
+
 def get_ticker_list():
     coinbase_ticker_list = get_coinbase_ticker_list()
     len_cb_list = len(coinbase_ticker_list)
@@ -44,7 +49,7 @@ def get_ticker_list():
             try:
                 link = csv_data[i][3]
             except IndexError:
-                link = None
+                link = get_link(name)
 
             ticker_list.append([ticker, name, index, ticker in coinbase_ticker_list, link])
             if ticker in coinbase_ticker_list:

@@ -13,9 +13,8 @@ scheduler = BlockingScheduler(timezone=pytz.utc)
 def daily_routine():
     try:
         package_manager.reload_packages()
-        coinmarketcap.update_coinbase_coinss()
-        mc_main.multi_model_predict()
         coinmarketcap.update()
+        mc_main.multi_model_predict()
         mc_main.multi_model_retrain()
         logging.stop_logging()
     except Exception as e:
@@ -25,5 +24,4 @@ def daily_routine():
         raise e
 
 
-daily_routine()
 scheduler.start()

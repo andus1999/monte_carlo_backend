@@ -16,6 +16,7 @@ from monte_carlo.utils import logging
 from monte_carlo.resources import strings
 from . import binance
 from .resources import filepaths
+from .utils import storage
 
 
 def get_coinbase_ticker_list():
@@ -74,6 +75,7 @@ def get_api_historical_data(data):
     for entry in data:
         date = datetime.datetime(int(entry[8]), int(entry[7]), int(entry[6]), 0, 0, 0, 0, tzinfo=datetime.timezone.utc)
         json_data.append([float(price) for price in entry[0:6]]+[date.timestamp()])
+    json_data.reverse()
     return json_data
 
 
@@ -81,6 +83,7 @@ def save_csv(name, data):
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + name + '.json', 'w+') as file:
         json_data = get_api_historical_data(data)
         json.dump(json_data, file)
+    storage.upload_historical_data(name)
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + name + '.csv', 'w') as file:
         write = csv.writer(file, quoting=csv.QUOTE_NONE)
         write.writerows(data)
@@ -339,7 +342,7 @@ def update(off_server=False):
     web_driver.close()
 
 
-def update_coinbase_coinss(off_server=False):
+def update_coinbase_coins(off_server=False):
     logging.switch_logging_category(strings.logging_coinmarketcap_update)
     web_driver = initialize(off_server)
     start_time = time.time()

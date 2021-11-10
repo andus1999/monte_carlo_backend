@@ -34,3 +34,9 @@ trade_data_json = 'trade_data.json'
 portfolio_history = 'portfolio_history.pkl'
 current_portfolio = 'current_portfolio.json'
 trade_history = 'trade_history.json'
+
+# firebase db
+firebase_db_key = '../../../data/credentials/decryptor_key.json'
+
+#data
+coins_json_path = '../../../data/node_server/coins/'

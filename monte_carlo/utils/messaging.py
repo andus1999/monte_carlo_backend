@@ -14,11 +14,11 @@ def send_message(title, body):
         firebase_tokens = json.load(f)['firebase_tokens']
 
     try:
-        firebase_admin.get_app()
+        app = firebase_admin.get_app('messaging')
     except ValueError:
         fb_key_path = os.path.join(os.path.dirname(__file__), filepaths.firebase_credentials)
         cred = credentials.Certificate(fb_key_path)
-        firebase_admin.initialize_app(cred)
+        app = firebase_admin.initialize_app(cred, None, 'messaging')
 
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
@@ -26,7 +26,7 @@ def send_message(title, body):
             body=body,
         ), tokens=firebase_tokens)
 
-    response = messaging.send_multicast(message)
+    response = messaging.send_multicast(message, app=app)
     # Response is a message ID string.
     print('Successfully sent message:', response)
 
