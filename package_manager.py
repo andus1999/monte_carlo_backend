@@ -31,5 +31,3 @@ def reload_package(package):
 def reload_packages():
     reload_package(monte_carlo)
     reload_package(data)
-    reload_package(trading)
-    reload_package(resources)

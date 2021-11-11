@@ -16,7 +16,7 @@ from monte_carlo.utils import logging
 from monte_carlo.resources import strings
 from . import binance
 from .resources import filepaths
-from .utils import storage
+from .utils import storage, firestore
 
 
 def get_coinbase_ticker_list():
@@ -80,8 +80,9 @@ def get_api_historical_data(data):
 
 
 def save_csv(name, data):
+    json_data = get_api_historical_data(data)
+    firestore.upload_historical_data(name, json_data[30:])
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + name + '.json', 'w+') as file:
-        json_data = get_api_historical_data(data)
         json.dump(json_data, file)
     storage.upload_historical_data(name)
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + name + '.csv', 'w') as file:

@@ -1,9 +1,9 @@
 import firebase_admin
-import google
 from firebase_admin import credentials
 from firebase_admin import firestore
 from ..resources import filepaths
 import os
+from .. import utils
 
 
 def get_db():
@@ -19,15 +19,8 @@ def get_db():
     return db
 
 
-def upload_coin_data(coin_data):
+def upload_historical_data(coin, data):
     db = get_db()
+    short_data = utils.data.get_historical_data(data)
 
-    coin = coin_data['id']
-    db.collection(u'coins').document(coin).set(coin_data, merge=True)
-
-
-def upload_model_data(model_data):
-    db = get_db()
-
-    model = model_data['model_name']
-    db.collection(u'models').document(model).set(model_data, merge=True)
+    db.collection(u'coins').document(coin).collection(u'historical_data').document(u'historical_data').set(short_data)
