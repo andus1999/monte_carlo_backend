@@ -9,8 +9,7 @@ from . import settings
 from .settings import hyper_parameters
 from .resources import values, filepaths
 from . import utils
-from .utils import firestore
-from .settings import models
+from .data_management import firestore
 
 
 def load_prediction_objects(model_name):
@@ -25,15 +24,13 @@ def load_prediction_objects(model_name):
 
 def save_prediction_objects(prediction_objects, model_name):
     prediction_objects_trimmed = utils.trim_list(prediction_objects)
+
+    # firestore
+    firestore.upload_model_data(prediction_objects)
+    firestore.upload_prediction_data(prediction_objects)
+
     path = os.path.join(os.path.dirname(__file__), filepaths.prediction_data_path + model_name)
-    prediction_list = prediction_objects_trimmed[-1]['prediction_list']
-    if 'lstm' in model_name:
-        model_data = utils.data.get_model_data(prediction_objects)
-        firestore.upload_model_data(model_data)
-        for prediction_element in prediction_list:
-            prediction_element['forecast'] = settings.forecast_in_days
-            coin_data = utils.data.get_coin_data(prediction_element, model_name)
-            firestore.upload_coin_data(coin_data)
+
     if not os.path.exists(path):
         os.mkdir(path)
     with open(path+filepaths.prediction_objects_pkl, 'wb') as f:
@@ -41,7 +38,7 @@ def save_prediction_objects(prediction_objects, model_name):
     with open(path+filepaths.prediction_objects_json, 'w+') as f:
         json.dump(utils.round_floats(prediction_objects_trimmed), f)
     with open(path+filepaths.predictions_json, 'w+') as f:
-        json.dump(prediction_list, f)
+        json.dump(prediction_objects_trimmed[-1]['prediction_list'], f)
 
 
 def save_prediction_graphs(prediction_graphs, model_name):

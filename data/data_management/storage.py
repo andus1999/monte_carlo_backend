@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import storage
-from ..resources import filepaths
+from data.resources import filepaths
 import os
 
 
@@ -11,7 +11,8 @@ def upload_historical_data(coin):
     except ValueError:
         cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), filepaths.firebase_db_key))
         app = firebase_admin.initialize_app(cred, {
-            'storageBucket': 'decryptor-329419.appspot.com'
+            'storageBucket': 'decryptor-329419.appspot.com',
+            'projectId': 'decryptor-329419'
         }, 'decryptor')
 
     bucket = storage.bucket(None, app)

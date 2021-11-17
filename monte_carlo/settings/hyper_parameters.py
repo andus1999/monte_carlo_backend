@@ -15,7 +15,7 @@ retrain_patience_factor = 0.5
 
 
 # evaluation
-bayesian_sets = 8
+bayesian_sets = 4
 spread_margin = 0.02
 investment_condition_factor = 0.02
 

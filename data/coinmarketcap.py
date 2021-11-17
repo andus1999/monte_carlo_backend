@@ -16,7 +16,7 @@ from monte_carlo.utils import logging
 from monte_carlo.resources import strings
 from . import binance
 from .resources import filepaths
-from .utils import storage, firestore
+from .data_management import firestore, storage
 
 
 def get_coinbase_ticker_list():
@@ -81,7 +81,7 @@ def get_api_historical_data(data):
 
 def save_csv(name, data):
     json_data = get_api_historical_data(data)
-    firestore.upload_historical_data(name, json_data[30:])
+    firestore.upload_historical_data(name, json_data[-30:])
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + name + '.json', 'w+') as file:
         json.dump(json_data, file)
     storage.upload_historical_data(name)
@@ -106,7 +106,7 @@ def initialize_x_paths():
     global month_selection_back
     month_selection_back = '/html/body/div/div/div[2]/div/div[3]/div[2]/div/div[1]/div/div/div[1]/div/div/div[1]/div[1]/div/button[1]'
     global load_more
-    load_more = '/html/body/div/div[1]/div[1]/div[2]/div/div[3]/div/div/p[1]/button'
+    load_more = '/html/body/div/div[1]/div/div[2]/div/div[3]/div[2]/div/p[1]/button'
     global select_day
     select_day = '/html/body/div/div/div[2]/div/div[3]/div[2]/div/div[1]/div/div/div[1]/div/div/div[1]/div[1]/div/div[2]/div[2]/div[1]/div[7]'
     global month_selection_done
@@ -166,23 +166,14 @@ def update_table(index, new_table):
     save_csv(name, table)
 
 
-def set_date_range(months, driver, index):
-    selenium_click_on(date_range, driver, index)
-    time.sleep(2)
-    date_selection_working = True
+def set_date_range(months, driver):
+    driver.execute_script("window.scrollBy(0,10000);")
+    time.sleep(1)
     for k in range(0, months):  # 120
-        try:
-            driver.find_element_by_xpath(month_selection_back).click()
-        except selenium.common.exceptions.NoSuchElementException:
-            if date_selection_working is True:
-                driver.execute_script("window.scrollBy(0,400);")
-                date_selection_working = False
-            driver.find_element_by_xpath(load_more).click()
-            time.sleep(1)
+        driver.find_element_by_xpath(load_more).click()
+        time.sleep(1)
+        driver.execute_script("window.scrollBy(0,10000);")
         time.sleep(0.5)
-    if date_selection_working:
-        selenium_click_on(select_day, driver, index)
-        selenium_click_on(month_selection_done, driver, index)
     wait()
 
 
@@ -274,7 +265,7 @@ def get_historical_data(index, driver):
 
     go_to_historical_data(name, driver, index)
 
-    set_date_range(history_in_years * 12, driver, index)
+    set_date_range(history_in_years * 12, driver)
 
     table = get_table_data(index, driver, False)
 

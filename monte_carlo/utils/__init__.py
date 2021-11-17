@@ -1,5 +1,5 @@
 from ..resources import values
-from . import data
+
 
 def round_floats(o):
     if isinstance(o, float):

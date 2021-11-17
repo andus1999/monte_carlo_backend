@@ -1,6 +1,6 @@
 
 
-def get_historical_data_json(data):
+def get_coin_data_json(data):
     json_data = []
     for date in data:
         json_data.append({
@@ -12,4 +12,4 @@ def get_historical_data_json(data):
             'market_cap': date[5],
             'timestamp': date[6],
         })
-    return json_data
+    return {'historical_data': json_data}

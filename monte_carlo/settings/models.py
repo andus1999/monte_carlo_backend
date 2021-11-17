@@ -9,6 +9,42 @@ dense_models = ['monte_carlo_bnd1', 'monte_carlo_bnd2', 'monte_carlo_bnd3', 'mon
 lstm_models = ['monte_carlo_lstm3', 'monte_carlo_lstm1', 'monte_carlo_lstm2', 'monte_carlo_lstm7']
 
 
+def get_display_name(model_name: str) -> str:
+    if model_name == 'monte_carlo_bnd1':
+        display_name = 'Dense net 1'
+
+    elif model_name == 'monte_carlo_bnd2':
+        display_name = 'Dense net 2'
+
+    elif model_name == 'monte_carlo_bnd3':
+        display_name = 'Dense net 3'
+
+    elif model_name == 'monte_carlo_bnd7':
+        display_name = 'Dense net 7'
+
+    elif model_name == 'monte_carlo_lstm1':
+        display_name = 'Long short-term memory 1'
+
+    elif model_name == 'monte_carlo_lstm2':
+        display_name = 'Long short-term memory 2'
+
+    elif model_name == 'monte_carlo_lstm3':
+        display_name = 'Long short-term memory 3'
+
+    elif model_name == 'monte_carlo_lstm7':
+        display_name = 'Long short-term memory 7'
+
+    else:
+        display_name = model_name
+
+    return display_name
+
+
+def get_id(model_name: str) -> str:
+    model_id = model_name.replace('_', '-')
+    return model_id
+
+
 def get_description(model_name: str) -> str:
     description = ""
 
