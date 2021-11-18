@@ -111,6 +111,7 @@ def multi_model_predict():
 
 
 def multi_model_retrain():
+    return
     logging.switch_logging_category(strings.logging_multi_model_retrain)
     for model_name in models.dense_models:
         retrain(model_name, hyper_parameters.epochs_dense)
