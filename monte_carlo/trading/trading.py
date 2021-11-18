@@ -118,7 +118,7 @@ def buy(client, pending_investment: data_classes.PendingInvestment):
         return None, None, None, '{} has no suitable trading pair.'.format(pending_investment.ticker[1])
 
     index = setup.base_currencies.index(base_currency)
-    limit_quote = functions.usd_to_quote(limit_usd, index)
+    limit_quote = functions.usd_to_quote(limit_usd*0.99, index)
     limit_quote_str = functions.float_to_string(limit_quote, setup.quote_increments[index])
 
     base_min_size = setup.base_min_sizes[index]
