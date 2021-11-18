@@ -106,7 +106,7 @@ def get_ticker_tables(ticker_list):
     year = date.year
     not_up_to_date = []
 
-    min_table_length = settings.forecast_in_days*2 + hyper_parameters.test_sample_size*2-1+settings.x_train_length
+    min_table_length = settings.forecast_in_days*2 + hyper_parameters.test_sample_size*2
     for ticker in ticker_list:
         table = csv_to_pandas(ticker)
         if table.empty is False and len(table.index) >= min_table_length:
@@ -138,8 +138,11 @@ def get_np_ticker_tables(ticker_tables, tickers_for_data_unfiltered, coinbase_on
     for i in range(0, len(tickers_for_data_unfiltered)):
         if coinbase_only is False or tickers_for_data_unfiltered[i][3] is True:
             np_table = ticker_tables[i].to_numpy().copy()
-            np_ticker_tables.append(np.append([np.zeros_like(np_table[0])], np_table, axis=0))
+            np_ticker_tables.append(np.append(np.zeros((settings.x_train_length-1, len(np_table[0]))), np_table, axis=0))
             tickers_for_data.append(tickers_for_data_unfiltered[i])
+    print('Added zero paddings:')
+    print('Shape before: ' + str(ticker_tables[0].shape))
+    print('Shape after: ' + str(np_ticker_tables[0].shape))
     print('Tickers for data:')
     print(len(np_ticker_tables))
 
