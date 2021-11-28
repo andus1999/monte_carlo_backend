@@ -38,5 +38,7 @@ trade_history = 'trade_history.json'
 # firebase db
 firebase_db_key = '../../../data/credentials/decryptor_key.json'
 
-#data
-coins_json_path = '../../../data/node_server/coins/'
+# data
+coins_json_path = '../../../data/node_server/coins/historical_data/'
+sentiment_path = '../../../data/node_server/coins/sentiment/'
+

@@ -3,14 +3,20 @@ import os
 import datetime
 
 from .. import settings
-from monte_carlo.resources import filepaths, values
-from monte_carlo.settings import models
+from ..resources import filepaths, values
+from ..settings import models
 
 
 def get_historical_data(coin):
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + coin + '.json', 'r') as file:
         historical_data = json.load(file)
     return historical_data
+
+
+def load_sentiment(coin_id):
+    with open(os.path.join(os.path.dirname(__file__), filepaths.sentiment_path) + coin_id + '.json') as f:
+        sentiment = json.load(f)
+    return sentiment[-1]
 
 
 def get_prediction_data(prediction_objects):
@@ -24,11 +30,13 @@ def get_prediction_data(prediction_objects):
         ticker = prediction_element['ticker']
         prediction = prediction_element['prediction']
         coin_id = ticker[4]
+        sentiment_data = load_sentiment(coin_id)
         current_metrics = get_historical_data(coin_id)[-1]
         prediction_data[coin_id] = {
             'name': ticker[1],
             'ticker': ticker[0],
             'id': coin_id,
+            'sentiment': sentiment_data['sentiment'],
             'market_data': {
                 'open': current_metrics[0],
                 'high': current_metrics[1],
