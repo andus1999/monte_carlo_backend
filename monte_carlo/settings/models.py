@@ -6,7 +6,10 @@ from .. import settings
 main_model = 'monte_carlo_lstm3'
 
 dense_models = ['monte_carlo_bnd1', 'monte_carlo_bnd2', 'monte_carlo_bnd3', 'monte_carlo_bnd7']
-lstm_models = ['monte_carlo_lstm3', 'monte_carlo_lstm1', 'monte_carlo_lstm2', 'monte_carlo_lstm7']
+lstm_models = ['monte_carlo_lstm3', 'monte_carlo_lstm1', 'monte_carlo_lstm7']
+
+retrain_dense_models = []
+retrain_lstm_models = ['monte_carlo_lstm1']
 
 
 def get_display_name(model_name: str) -> str:

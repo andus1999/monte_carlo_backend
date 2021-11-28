@@ -111,12 +111,11 @@ def multi_model_predict():
 
 
 def multi_model_retrain():
-    return
     logging.switch_logging_category(strings.logging_multi_model_retrain)
-    for model_name in models.dense_models:
+    for model_name in models.retrain_dense_models:
         retrain(model_name, hyper_parameters.epochs_dense)
 
-    for model_name in models.lstm_models:
+    for model_name in models.retrain_lstm_models:
         retrain(model_name, hyper_parameters.epochs_lstm)
 
     print('All models updated. '+str(datetime.datetime.now()))
