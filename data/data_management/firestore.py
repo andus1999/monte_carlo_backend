@@ -20,8 +20,11 @@ def get_db():
     return db
 
 
-def upload_historical_data(coin, data):
+def upload_coin_data(data, name, ticker, coin_id):
     db = get_db()
 
-    short_data = data_management.data.get_coin_data_json(data)
-    db.collection(u'coins').document(coin).set(short_data)
+    converted_data = data_management.data.get_coin_data_json(data, name, ticker, coin_id)
+    db.collection(u'coins').document(coin_id).set(converted_data)
+
+
+get_db()
