@@ -85,7 +85,7 @@ def get_table_for_coinmarketcap(table, index, update_only):
     end = datetime.datetime(table[0][-2], table[0][-3], table[0][-4], 0, 0, 0, 0, datetime.timezone.utc).strftime("%d %b, %Y")
     historical_data = get_historical_data(index, start, end)
     if historical_data is None or len(historical_data) == 0:
-        print('Binance data invalid.')
+        # print(f'Binance data invalid. {get_link(index)}')
         return table
     historical_data.reverse()
     for i in range(min(len(historical_data), len(table))):

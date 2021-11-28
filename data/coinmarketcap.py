@@ -4,13 +4,13 @@ import json
 import os
 import time
 
-import cbpro
 import selenium
+from threading import Thread
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from monte_carlo.utils import logging
 from monte_carlo.resources import strings
@@ -19,20 +19,8 @@ from .resources import filepaths
 from .data_management import firestore, storage
 
 
-def get_coinbase_ticker_list():
-    client = cbpro.PublicClient()
-    products = client.get_products()
-    coinbase_ticker_list = []
-    for product in products:
-        ticker = product['base_currency']
-        if ticker not in coinbase_ticker_list:
-            coinbase_ticker_list.append(ticker)
-    return coinbase_ticker_list
-
-
 def month_to_number(string):
     string = string.lower()
-    m = 0
     if string == 'jan':
         m = 1
     elif string == 'feb':
@@ -62,10 +50,6 @@ def month_to_number(string):
     return m
 
 
-def wait():
-    time.sleep(loading_time)
-
-
 def get_variable_name(obj, namespace):
     return [name for name in namespace if namespace[name] is obj]
 
@@ -79,15 +63,19 @@ def get_api_historical_data(data):
     return json_data
 
 
-def save_csv(name, data):
+def save_csv(index, data):
+    coin_id = get_link(index)
+    ticker = get_ticker(index)
+    name = get_name(index)
     json_data = get_api_historical_data(data)
-    firestore.upload_historical_data(name, json_data[-30:])
-    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + name + '.json', 'w+') as file:
+    firestore.upload_coin_data(json_data[-30:], name, ticker, coin_id)
+    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + coin_id + '.json', 'w+') as file:
         json.dump(json_data, file)
-    storage.upload_historical_data(name)
-    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + name + '.csv', 'w') as file:
+    storage.upload_historical_data(coin_id)
+    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + coin_id + '.csv', 'w') as file:
         write = csv.writer(file, quoting=csv.QUOTE_NONE)
         write.writerows(data)
+    return
 
 
 def open_csv(name):
@@ -147,6 +135,13 @@ def get_ticker(index):
     return ticker
 
 
+def get_name(index):
+    if crypto_list is None:
+        raise ValueError('Client not initialized.')
+    name = crypto_list[index][1]
+    return name
+
+
 def update_table(index, new_table):
     name = get_link(index)
     table = open_csv(name)
@@ -163,7 +158,7 @@ def update_table(index, new_table):
             print('\n'+crypto_list[index][1] + ' ' + str(row + 1) + ' rows updated. Index: ' + str(index))
     elif index % 100 == 0:
         print('\n'+crypto_list[index][1] + ' already up to date. Index: ' + str(index))
-    save_csv(name, table)
+    Thread(target=save_csv, args=(index, table,)).start()
 
 
 def set_date_range(months, driver):
@@ -174,13 +169,14 @@ def set_date_range(months, driver):
         time.sleep(1)
         driver.execute_script("window.scrollBy(0,10000);")
         time.sleep(0.5)
-    wait()
+    time.sleep(10)
 
 
 def get_element(x_path, driver, index):
     time_out = 20
     try:
-        element = WebDriverWait(driver, time_out).until(EC.presence_of_element_located((By.XPATH, x_path)))
+        element = WebDriverWait(driver, time_out)\
+            .until(expected_conditions.presence_of_element_located((By.XPATH, x_path)))
     except TimeoutException:
         print('\nElement not found. Returning None. ' + get_variable_name(x_path, globals())[0] + ' ' + get_link(index))
         element = None
@@ -190,7 +186,7 @@ def get_element(x_path, driver, index):
 
 def selenium_click_on(x_path, driver, index):
     element = get_element(x_path, driver, index)
-    time.sleep(1)
+    time.sleep(loading_time)
     if element is not None:
         element.click()
         return True
@@ -203,9 +199,9 @@ def get_table_data(index, driver, update_only: bool):
     while_count = 0
     table_elements, elements_per_row = None, None
     while rows == 0:
-        time.sleep(2)
+        time.sleep(loading_time)
         driver.execute_script("window.scrollBy(0,400);")
-        time.sleep(1)
+        time.sleep(loading_time)
         try:
             table_element = get_element(table_body, driver, index)
             table_text = table_element.get_attribute('innerHTML')
@@ -225,8 +221,9 @@ def get_table_data(index, driver, update_only: bool):
         rows = len(table_elements) // elements_per_row
         while_count += 1
         if rows == 0:
+            print(f'Table not found refreshing. {get_link(index)}')
             driver.refresh()
-            time.sleep(5)
+            time.sleep(10)
         if while_count > 100:
             raise TimeoutException
 
@@ -253,10 +250,15 @@ def get_table_data(index, driver, update_only: bool):
 
 def go_to_historical_data(name, driver, index):
     driver.get('https://coinmarketcap.com/currencies/' + name)
-    if selenium_click_on(historical_data, driver, index):
-        return True
-    else:
-        return False
+    count = 0
+    while not selenium_click_on(historical_data, driver, index):
+        count += 1
+        if count > 2:
+            return False
+        print('Refreshing...')
+        driver.refresh()
+        time.sleep(20)
+    return True
 
 
 def get_historical_data(index, driver):
@@ -271,7 +273,7 @@ def get_historical_data(index, driver):
 
     print(crypto_list[index][1] + ' ' + str(len(table)) + ' rows.')
 
-    save_csv(name, table)
+    save_csv(index, table)
 
     print(crypto_list[index][1] + ' done. Index: ' + str(index))
 
@@ -298,65 +300,51 @@ def update_historical_data(index, driver):
         print('Delta Time: ' + str(delta_time) + ' s')
 
 
-def initialize(off_server=False):
-    print('Starting...')
-    initialize_x_paths()
-    options = webdriver.ChromeOptions()
-    if off_server:
-        options.add_argument('--user-data-dir=C:\\Users\\Andi\\AppData\\Local\\Google\\Chrome\\User Data')
-    else:
-        options.add_argument('--user-data-dir=C:\\Users\\Andreas\\AppData\\Local\\Google\\Chrome\\User Data')
-
-    options.add_argument('--profile-directory=Profile 2')
-
-    with open(os.path.join(os.path.dirname(__file__), filepaths.crypto_names_csv), newline='') as f:
-        reader = filter(None, csv.reader(f))
-        global crypto_list
-        crypto_list = list(reader)
-
-    global loading_time
-    loading_time = 10
-    global history_in_years
-    history_in_years = 10
-
-    web_driver = webdriver.Chrome(options=options)
+def open_driver():
+    web_driver = webdriver.Chrome()
     return web_driver
 
 
-def update(off_server=False):
-    logging.switch_logging_category(strings.logging_coinmarketcap_update)
-    web_driver = initialize(off_server)
-    start_time = time.time()
-    for i in range(0, len(crypto_list)):
+def update_window_instance(index_range):
+    web_driver = open_driver()
+    for i in index_range:
         update_historical_data(i, web_driver)
-    delta_time = time.time()-start_time
-    print('\nCoinmarketcap update took {:.2f} hours.'.format(delta_time/3600))
     web_driver.close()
 
 
-def update_coinbase_coins(off_server=False):
+def update():
+    global loading_time
     logging.switch_logging_category(strings.logging_coinmarketcap_update)
-    web_driver = initialize(off_server)
     start_time = time.time()
-    coinbase_ticker_list = get_coinbase_ticker_list()
-    for i in range(0, len(crypto_list)):
-        if get_ticker(i) in coinbase_ticker_list:
-            update_historical_data(i, web_driver)
+    threads = []
+    coins_per_instance = 60
+    for i in range(0, len(crypto_list)//coins_per_instance+1):
+        start = i * coins_per_instance
+        end = start + coins_per_instance
+        if end > len(crypto_list):
+            end = len(crypto_list)
+        thread = Thread(target=update_window_instance, args=(range(start, end),))
+        thread.start()
+        threads.append(thread)
+        time.sleep(loading_time)
+
+    for thread in threads:
+        thread.join()
+
     delta_time = time.time()-start_time
     print('\nCoinmarketcap update took {:.2f} hours.'.format(delta_time/3600))
-    web_driver.close()
 
 
-def add(indices, off_server=False):
-    web_driver = initialize(off_server)
+def add(indices):
+    web_driver = open_driver()
     for i in indices:
         get_historical_data(i, web_driver)
     print('Done.')
     web_driver.close()
 
 
-def reload_historical_data(indices, off_server=False):
-    web_driver = initialize(off_server)
+def reload_historical_data(indices):
+    web_driver = open_driver()
     for i in indices:
         name = get_link(i)
         if os.path.exists(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + name + '.csv'):
@@ -365,3 +353,11 @@ def reload_historical_data(indices, off_server=False):
             print('No file found {}.'.format(name))
     print('Done.')
     web_driver.close()
+
+
+loading_time = 1
+history_in_years = 10
+initialize_x_paths()
+with open(os.path.join(os.path.dirname(__file__), filepaths.crypto_names_csv), newline='') as f:
+    reader = filter(None, csv.reader(f))
+    crypto_list = list(reader)
