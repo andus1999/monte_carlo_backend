@@ -66,9 +66,10 @@ def analyse_headline(classifier, headline):
     return sentiment
 
 
-def get_sentiment_data(classifier, headline_elements, index):
+def get_sentiment_data(headline_elements, index):
     headlines = []
     sentiments = []
+    classifier = pipeline("sentiment-analysis")
     for element in headline_elements:
         headline = element.get_attribute('innerHTML')
         link = element.get_attribute('href')
@@ -104,10 +105,9 @@ def get_sentiment_data(classifier, headline_elements, index):
 
 def update_news_sentiment():
     driver = webdriver.Chrome()
-    classifier = pipeline("sentiment-analysis")
     for i in range(0, len(crypto_list)):
         headline_elements = get_headline_elements(driver, i)
-        data = get_sentiment_data(classifier, headline_elements, i)
+        data = get_sentiment_data(headline_elements, i)
         save_json(data, get_link(i))
     driver.close()
 
