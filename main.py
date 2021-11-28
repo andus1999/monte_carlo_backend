@@ -2,6 +2,7 @@ import pytz
 from apscheduler.schedulers.blocking import BlockingScheduler
 from monte_carlo import mc_main
 from data import coinmarketcap
+from data.sentiment import news_sentiment
 from monte_carlo.utils import messaging, logging
 import package_manager
 import traceback
@@ -16,6 +17,7 @@ def daily_routine():
         coinmarketcap.update()
         mc_main.multi_model_predict()
         mc_main.multi_model_retrain()
+        news_sentiment.update_news_sentiment()
         logging.stop_logging()
     except Exception as e:
         messaging.notify_exception()
@@ -24,5 +26,4 @@ def daily_routine():
         raise e
 
 
-daily_routine()
 scheduler.start()
