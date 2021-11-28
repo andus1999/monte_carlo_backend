@@ -6,7 +6,6 @@ from . import mc_prediction
 from . import mc_model
 from . import settings
 from .settings import hyper_parameters
-from .utils import math as math_utils
 
 
 def get_percentage_gain(y_true, y_pred):

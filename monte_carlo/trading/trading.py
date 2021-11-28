@@ -32,14 +32,6 @@ def load_trade_files():
     return trade_data, trade_history, portfolio_history
 
 
-def update_trade_data_from_json():
-    path = os.path.join(os.path.dirname(__file__), filepaths.trade_data_path)
-    with open(path + filepaths.trade_data_json) as f:
-        trade_data = json.load(f)
-    with open(path + filepaths.trade_data, 'wb') as f:
-        pickle.dump(trade_data, f, pickle.DEFAULT_PROTOCOL)
-
-
 def save_trade_files(trade_data, trade_history, portfolio_history, current_portfolio):
     if settings.test_mode is True:
         print('Trading files are not saved in test mode.')
@@ -118,7 +110,7 @@ def buy(client, pending_investment: data_classes.PendingInvestment):
         return None, None, None, '{} has no suitable trading pair.'.format(pending_investment.ticker[1])
 
     index = setup.base_currencies.index(base_currency)
-    limit_quote = functions.usd_to_quote(limit_usd*0.99, index)
+    limit_quote = functions.usd_to_quote(limit_usd, index)
     limit_quote_str = functions.float_to_string(limit_quote, setup.quote_increments[index])
 
     base_min_size = setup.base_min_sizes[index]

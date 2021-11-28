@@ -13,12 +13,12 @@ def initialize_test_settings():
     settings.test_mode = True
 
 
-def test_routine(off_server=True):
+def test_routine():
     try:
         package_manager.reload_packages()
         initialize_test_settings()
-        coinmarketcap.update(off_server)
-        mc_main.multi_model_predict_and_retrain()
+        coinmarketcap.update()
+        mc_main.multi_model_predict()
         logging.stop_logging()
     except Exception as e:
         messaging.notify_exception()

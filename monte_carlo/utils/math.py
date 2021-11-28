@@ -1,5 +1,3 @@
-import numpy as np
-
 
 def top_k_indices(array, k):
     a = array.copy()

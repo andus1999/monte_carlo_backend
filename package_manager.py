@@ -1,9 +1,9 @@
 import importlib
-import data
-import monte_carlo
 import os
 import types
-from monte_carlo import resources, trading
+
+import data
+import monte_carlo
 
 
 def reload_package(package):
