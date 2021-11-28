@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-from monte_carlo.resources import filepaths
+from ..resources import filepaths
 from . import data
 from ..settings import models
 import os
