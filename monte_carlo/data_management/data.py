@@ -14,9 +14,16 @@ def get_historical_data(coin):
 
 
 def load_sentiment(coin_id):
-    with open(os.path.join(os.path.dirname(__file__), filepaths.sentiment_path) + coin_id + '.json') as f:
-        sentiment = json.load(f)
-    return sentiment[-1]
+    path = os.path.join(os.path.dirname(__file__), filepaths.sentiment_path) + coin_id + '.json'
+    if os.path.exists(path):
+        with open(path) as f:
+            sentiment = json.load(f)[-1]['sentiment']
+    else:
+        sentiment = {
+            'sentiment_score': None,
+            'sentiment_value': None,
+        }
+    return sentiment
 
 
 def get_prediction_data(prediction_objects):
@@ -30,13 +37,13 @@ def get_prediction_data(prediction_objects):
         ticker = prediction_element['ticker']
         prediction = prediction_element['prediction']
         coin_id = ticker[4]
-        sentiment_data = load_sentiment(coin_id)
+        sentiment = load_sentiment(coin_id)
         current_metrics = get_historical_data(coin_id)[-1]
         prediction_data[coin_id] = {
             'name': ticker[1],
             'ticker': ticker[0],
-            'id': coin_id,
-            'sentiment': sentiment_data['sentiment'],
+            'coin_id': coin_id,
+            'sentiment': sentiment,
             'market_data': {
                 'open': current_metrics[0],
                 'high': current_metrics[1],

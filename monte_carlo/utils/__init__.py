@@ -1,14 +1,14 @@
 from ..resources import values
 
 
-def round_floats(o):
-    if isinstance(o, float):
-        return round(o, 5)
-    if isinstance(o, dict):
-        return {k: round_floats(v) for k, v in o.items()}
-    if isinstance(o, (list, tuple)):
-        return [round_floats(x) for x in o]
-    return o
+def round_floats(obj):
+    if isinstance(obj, float):
+        return round(obj, 5)
+    if isinstance(obj, dict):
+        return {k: round_floats(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [round_floats(x) for x in obj]
+    return obj
 
 
 def trim_list(untrimmed_list):

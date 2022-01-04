@@ -83,7 +83,11 @@ def get_table_for_coinmarketcap(table, index, update_only):
         timedelta = datetime.timedelta(days=365*10)
     start = (functions.get_yesterday_datetime()-timedelta).strftime("%d %b, %Y")
     end = datetime.datetime(table[0][-2], table[0][-3], table[0][-4], 0, 0, 0, 0, datetime.timezone.utc).strftime("%d %b, %Y")
-    historical_data = get_historical_data(index, start, end)
+    historical_data = None
+    try:
+        historical_data = get_historical_data(index, start, end)
+    except requests.exceptions.ReadTimeout:
+        pass
     if historical_data is None or len(historical_data) == 0:
         # print(f'Binance data invalid. {get_link(index)}')
         return table

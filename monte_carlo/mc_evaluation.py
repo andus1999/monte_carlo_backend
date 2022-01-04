@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from matplotlib import cm
+from matplotlib.colors import SymLogNorm
 from . import mc_prediction
 from . import mc_model
 from . import settings
@@ -37,7 +38,7 @@ def get_bayesian_gain(dnn_model, x_data, m_data, y_true, bayesian_sets):
 def scatter_plot(true, pred, title, bayesian_sets, log_path, dot_size=1.):
     cor = np.corrcoef(true, pred)
 
-    lims = [-0.5, 0.7]
+    lims = [-0.2, 0.3]
     plt.figure(figsize=(7, 7))
     plt.axes(aspect='equal')
     size = len(true) // bayesian_sets
@@ -47,7 +48,7 @@ def scatter_plot(true, pred, title, bayesian_sets, log_path, dot_size=1.):
     gradient.flatten()
 
     color_map = cm.get_cmap('viridis')
-    plt.scatter(true, pred, s=dot_size, c=gradient, cmap=color_map)
+    plt.hist2d(true, pred, 100, range=[lims, lims], cmap=color_map, norm=SymLogNorm(1))
     plt.xlabel('True Values')
     plt.ylabel('Predicted Values')
     plt.title(title + ' ' + str(round(cor[0][1], 5)))
@@ -162,6 +163,8 @@ def investing_algorithm(y_true, y_pred, title, bayesian_sets, log_path):
     print('Gain over set: ' + str(average_values[-1]))
     print('Random gain over set: ' + str(average_random_values[-1]))
     performance = average_values[-1] / average_random_values[-1]
+    if math.isnan(performance):
+        performance = 0
     print('Investing performance: ' + str(round(performance, 3)))
     return performance
 

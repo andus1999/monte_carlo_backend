@@ -7,6 +7,8 @@ from transformers import pipeline
 from selenium import webdriver
 from ..resources import filepaths
 from . import x_paths
+from monte_carlo.utils import logging
+from monte_carlo.resources import strings
 
 
 def save_json(data, coin_id):
@@ -63,13 +65,14 @@ def analyse_headline(classifier, headline):
     sentiment = sentiment_score
     if sentiment_value == 'NEGATIVE':
         sentiment *= -1
+    if sentiment_value == 'NEUTRAL':
+        sentiment = 0
     return sentiment
 
 
-def get_sentiment_data(headline_elements, index):
+def get_sentiment_data(classifier, headline_elements, index):
     headlines = []
     sentiments = []
-    classifier = pipeline("sentiment-analysis")
     for element in headline_elements:
         headline = element.get_attribute('innerHTML')
         link = element.get_attribute('href')
@@ -104,10 +107,12 @@ def get_sentiment_data(headline_elements, index):
 
 
 def update_news_sentiment():
+    logging.switch_logging_category(strings.logging_sentiment)
     driver = webdriver.Chrome()
+    classifier = pipeline('sentiment-analysis')
     for i in range(0, len(crypto_list)):
         headline_elements = get_headline_elements(driver, i)
-        data = get_sentiment_data(headline_elements, i)
+        data = get_sentiment_data(classifier, headline_elements, i)
         save_json(data, get_link(i))
     driver.close()
 

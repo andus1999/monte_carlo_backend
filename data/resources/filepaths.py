@@ -7,7 +7,7 @@ coins_csv_path = '../../cm/'
 
 # firebase storage
 firebase_db_key = '../../../data/credentials/decryptor_key.json'
-storage_coins_path = '../../../data/node_server/coins/'
+storage_coins_path = '../../../data/node_server/coins/historical_data/'
 
 # sentiment
 sentiment_path = '../../../data/node_server/coins/sentiment/'

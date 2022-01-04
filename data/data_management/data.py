@@ -25,11 +25,11 @@ def get_coin_data_json(data, name, ticker, coin_id):
             'market_cap': date[5],
             'timestamp': date[6],
         })
-    description = meta_data[ticker]['description']
-    logo = meta_data[ticker]['logo']
-    website = first_or_none(meta_data[ticker]['urls']['website'])
-    technical_doc = first_or_none(meta_data[ticker]['urls']['technical_doc'])
-    source_code = first_or_none(meta_data[ticker]['urls']['source_code'])
+    description = meta_data[coin_id]['description']
+    logo = meta_data[coin_id]['logo']
+    website = first_or_none(meta_data[coin_id]['urls']['website'])
+    technical_doc = first_or_none(meta_data[coin_id]['urls']['technical_doc'])
+    source_code = first_or_none(meta_data[coin_id]['urls']['source_code'])
 
     sentiment_data = load_sentiment(coin_id)
     sentiment = sentiment_data['sentiment']
@@ -57,11 +57,11 @@ def initialize():
     timestamp = datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/info'
     crypto_list = load_csv()
-    symbols = ''
-    for coin in crypto_list:
-        symbols += coin[2] + ','
+    slugs = ''
+    for i in range(0, len(crypto_list)):
+        slugs += get_link(i, crypto_list) + ','
     parameters = {
-        'symbol': symbols[:-1],
+        'slug': slugs[:-1],
     }
     headers = {
         'Accepts': 'application/json',
@@ -70,7 +70,12 @@ def initialize():
     try:
         response = requests.get(url, headers=headers, params=parameters)
         data = json.loads(response.text)
-        meta_data = data['data']
+        id_data = data['data']
+        meta_data = {}
+        for id_key in id_data.keys():
+            obj = id_data[id_key]
+            meta_data[obj['slug']] = obj
+
     except (ConnectionError, Timeout, TooManyRedirects) as e:
         meta_data = None
         print(e)
@@ -84,9 +89,20 @@ def load_csv():
 
 
 def load_sentiment(coin_id):
-    with open(os.path.join(os.path.dirname(__file__), filepaths.sentiment_path) + coin_id + '.json') as f:
-        sentiment = json.load(f)
-    return sentiment[-1]
+    path = os.path.join(os.path.dirname(__file__), filepaths.sentiment_path) + coin_id + '.json'
+    if os.path.exists(path):
+        with open(path) as f:
+            sentiment = json.load(f)[-1]
+    else:
+        sentiment = {
+            'sentiment': {
+                'sentiment_score': None,
+                'sentiment_value': None,
+            },
+            'headlines': [],
+            'timestamp': datetime.datetime.now(tz=datetime.timezone.utc).timestamp()
+        }
+    return sentiment
 
 
 def first_or_none(data):
@@ -94,6 +110,14 @@ def first_or_none(data):
         return data[0]
     except IndexError:
         return None
+
+
+def get_link(index, crypto_list):
+    try:
+        name = crypto_list[index][3]
+    except IndexError:
+        name = crypto_list[index][1].lower().replace(' ', '-').replace('.', '-')
+    return name
 
 
 meta_data = None

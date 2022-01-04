@@ -156,6 +156,3 @@ def retrain_model(x_train, m_train, y_train, x_val, m_val, y_val, model_name, ep
                           learning_rate=learning_rate, tensor_board=tensor_board, patience=patience, baseline=val_cor)
     save_model(dnn_model, model_name)
     return dnn_model
-
-
-tf.executing_eagerly()

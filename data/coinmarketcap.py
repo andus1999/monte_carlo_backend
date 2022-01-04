@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import time
+import traceback
 
 import selenium
 from threading import Thread
@@ -67,15 +68,14 @@ def save_csv(index, data):
     coin_id = get_link(index)
     ticker = get_ticker(index)
     name = get_name(index)
+    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + coin_id + '.csv', 'w') as file:
+        write = csv.writer(file, quoting=csv.QUOTE_NONE)
+        write.writerows(data)
     json_data = get_api_historical_data(data)
     firestore.upload_coin_data(json_data[-30:], name, ticker, coin_id)
     with open(os.path.join(os.path.dirname(__file__), filepaths.coins_json_path) + coin_id + '.json', 'w+') as file:
         json.dump(json_data, file)
     storage.upload_historical_data(coin_id)
-    with open(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + coin_id + '.csv', 'w') as file:
-        write = csv.writer(file, quoting=csv.QUOTE_NONE)
-        write.writerows(data)
-    return
 
 
 def open_csv(name):
@@ -103,6 +103,8 @@ def initialize_x_paths():
     table_body = '/html/body/div/div/div[1]/div[2]/div/div[3]/div/div/div[2]/table/tbody'
     global table_body_reload
     table_body_reload = '/html/body/div/div/div[1]/div[2]/div/div[3]/div/div/div[2]/table/tbody'
+    global close_cookies
+    close_cookies = '/html/body/div/div[1]/div[2]/div[2]/div[2]'
 
 
 def get_date(index, table):
@@ -162,12 +164,10 @@ def update_table(index, new_table):
 
 
 def set_date_range(months, driver):
-    driver.execute_script("window.scrollBy(0,10000);")
     time.sleep(1)
     for k in range(0, months):  # 120
         driver.find_element_by_xpath(load_more).click()
         time.sleep(1)
-        driver.execute_script("window.scrollBy(0,10000);")
         time.sleep(0.5)
     time.sleep(10)
 
@@ -248,8 +248,11 @@ def get_table_data(index, driver, update_only: bool):
     return table
 
 
-def go_to_historical_data(name, driver, index):
+def go_to_historical_data(name, driver, index, accept_cookies=False):
     driver.get('https://coinmarketcap.com/currencies/' + name)
+    if accept_cookies:
+        selenium_click_on(close_cookies, driver, index)
+    driver.execute_script("window.scrollBy(0,400);")
     count = 0
     while not selenium_click_on(historical_data, driver, index):
         count += 1
@@ -261,11 +264,11 @@ def go_to_historical_data(name, driver, index):
     return True
 
 
-def get_historical_data(index, driver):
+def get_historical_data(index, driver, accept_cookies):
     start_time = time.time()
     name = get_link(index)
 
-    go_to_historical_data(name, driver, index)
+    go_to_historical_data(name, driver, index, accept_cookies)
 
     set_date_range(history_in_years * 12, driver)
 
@@ -281,15 +284,15 @@ def get_historical_data(index, driver):
     print('Delta Time: ' + str(delta_time) + ' s')
 
 
-def update_historical_data(index, driver):
+def update_historical_data(index, driver, accept_cookies):
     start_time = time.time()
     name = get_link(index)
     if not os.path.exists(os.path.join(os.path.dirname(__file__), filepaths.coins_csv_path) + name + '.csv'):
-        print('No file found: ' + name, end=' ')
+        print('No file found: ' + name)
         return
     new_table = None
     while new_table is None:
-        if not go_to_historical_data(name, driver, index):
+        if not go_to_historical_data(name, driver, index, accept_cookies):
             print('No Historical Data Found: ' + name)
             return
         new_table = get_table_data(index, driver, True)
@@ -307,17 +310,37 @@ def open_driver():
 
 def update_window_instance(index_range):
     web_driver = open_driver()
+    accept_cookies = True
     for i in index_range:
-        update_historical_data(i, web_driver)
+        try:
+            update_historical_data(i, web_driver, accept_cookies)
+            accept_cookies = False
+        except:
+            print(f'{get_link(i)}: The following error occurred')
+            print(traceback.format_exc())
+
+    web_driver.close()
+
+
+def add_window_instance(index_range):
+    web_driver = open_driver()
+    accept_cookies = True
+    for i in index_range:
+        try:
+            get_historical_data(i, web_driver, accept_cookies)
+            accept_cookies = False
+        except:
+            print(f'{get_link(i)}: The following error occurred')
+            print(traceback.format_exc())
     web_driver.close()
 
 
 def update():
-    global loading_time
     logging.switch_logging_category(strings.logging_coinmarketcap_update)
+    print(f'Starting update of {len(crypto_list)} coins.')
     start_time = time.time()
     threads = []
-    coins_per_instance = 60
+    coins_per_instance = 50
     for i in range(0, len(crypto_list)//coins_per_instance+1):
         start = i * coins_per_instance
         end = start + coins_per_instance
@@ -336,11 +359,20 @@ def update():
 
 
 def add(indices):
-    web_driver = open_driver()
-    for i in indices:
-        get_historical_data(i, web_driver)
+    threads = []
+    coins_per_instance = 100
+    for i in range(0, len(indices)//coins_per_instance + 1):
+        start = i * coins_per_instance
+        end = start + coins_per_instance
+        if end > len(indices):
+            end = len(indices)
+        thread = Thread(target=add_window_instance, args=(indices[start:end], ))
+        thread.start()
+        threads.append(thread)
+        time.sleep(loading_time)
+    for thread in threads:
+        thread.join()
     print('Done.')
-    web_driver.close()
 
 
 def reload_historical_data(indices):

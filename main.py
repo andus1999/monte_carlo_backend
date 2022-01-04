@@ -26,4 +26,5 @@ def daily_routine():
         raise e
 
 
+daily_routine()
 scheduler.start()
